@@ -1,0 +1,23 @@
+# Example systemd unit for Tooth API (Uvicorn).
+# Copy to e.g. /etc/systemd/system/tooth-backend.service and adjust paths.
+#
+# After installing:
+#   sudo systemctl daemon-reload
+#   sudo systemctl enable --now tooth-backend
+
+[Unit]
+Description=Tooth backend API (Uvicorn)
+After=network.target postgresql.service
+
+[Service]
+Type=simple
+User=tooth
+Group=tooth
+WorkingDirectory=/opt/tooth/backend
+EnvironmentFile=/opt/tooth/backend/.env
+ExecStart=/opt/tooth/backend/.venv/bin/uvicorn app.main:app --host 127.0.0.1 --port 8000
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,187 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+SCRIPT_PATH="$(readlink -f "$0")"
+ROOT="$(cd "$(dirname "$SCRIPT_PATH")/.." && pwd)"
+source "$ROOT/scripts/lib/tooth_common.sh"
+
+backend_log="$TOOTH_LOG_DIR/backend.log"
+frontend_log="$TOOTH_LOG_DIR/frontend.log"
+operator_log="$TOOTH_LOG_DIR/operator.log"
+
+start_backend() {
+  local port="$1"
+  (
+    cd "$ROOT/backend"
+    if [ ! -d ".venv" ]; then python3 -m venv .venv; fi
+    source .venv/bin/activate
+    python -m pip install -q -r requirements-dev.txt
+    if [ ! -f ".env" ] && [ -f ".env.example" ]; then cp .env.example .env; fi
+    alembic upgrade head
+    uvicorn app.main:app --host "$TOOTH_BACKEND_HOST" --port "$port"
+  ) >"$backend_log" 2>&1 &
+  echo $!
+}
+
+start_frontend() {
+  local port="$1"
+  (
+    cd "$ROOT/frontend"
+    if [ ! -f ".env" ] && [ -f ".env.example" ]; then cp .env.example .env; fi
+    npm install --silent
+    VITE_API_PROXY_TARGET="http://$TOOTH_BACKEND_HOST:${BACKEND_PORT}" npm run dev -- --host "$TOOTH_FRONTEND_HOST" --port "$port"
+  ) >"$frontend_log" 2>&1 &
+  echo $!
+}
+
+start_operator() {
+  local port="$1"
+  (
+    cd "$ROOT"
+    python3 scripts/operator_server.py \
+      --host "$TOOTH_OPERATOR_HOST" \
+      --port "$port" \
+      --state-file "$TOOTH_STATE_FILE" \
+      --html-file "$ROOT/ops/operator.html"
+  ) >"$operator_log" 2>&1 &
+  echo $!
+}
+
+do_start() {
+  if [ -f "$TOOTH_LOCK_FILE" ] && [ -f "$TOOTH_STATE_FILE" ]; then
+    info "Tooth appears to be running. Use 'tooth status' or 'tooth restart'."
+    return 0
+  fi
+
+  BACKEND_PORT="$(choose_port "$TOOTH_BACKEND_PORT_DEFAULT" 20)" || {
+    stderr "No available backend port near ${TOOTH_BACKEND_PORT_DEFAULT}."
+    return 1
+  }
+  FRONTEND_PORT="$(choose_port "$TOOTH_FRONTEND_PORT_DEFAULT" 20)" || {
+    stderr "No available frontend port near ${TOOTH_FRONTEND_PORT_DEFAULT}."
+    return 1
+  }
+  OPERATOR_PORT="$(choose_port "$TOOTH_OPERATOR_PORT_DEFAULT" 20)" || {
+    stderr "No available operator port near ${TOOTH_OPERATOR_PORT_DEFAULT}."
+    return 1
+  }
+
+  printf "starting\n" >"$TOOTH_LOCK_FILE"
+  backend_pid="$(start_backend "$BACKEND_PORT")"
+  sleep 2
+  frontend_pid="$(start_frontend "$FRONTEND_PORT")"
+  sleep 2
+  operator_pid="$(start_operator "$OPERATOR_PORT")"
+  sleep 1
+
+  tailscale_ip=""
+  if ts="$(detect_tailscale_ip 2>/dev/null || true)"; then tailscale_ip="$ts"; fi
+  write_state "$backend_pid" "$frontend_pid" "$operator_pid" "$BACKEND_PORT" "$FRONTEND_PORT" "$OPERATOR_PORT" "$tailscale_ip"
+  printf "running\n" >"$TOOTH_LOCK_FILE"
+
+  info "Tooth started."
+  info "Frontend: $(read_state_field urls.frontend_local)"
+  info "Operator: $(read_state_field urls.operator_local)"
+  if [ -n "$tailscale_ip" ]; then
+    info "Frontend (tailscale): http://$tailscale_ip:$FRONTEND_PORT"
+    info "Operator (tailscale): http://$tailscale_ip:$OPERATOR_PORT"
+  fi
+}
+
+do_status() {
+  require_state || return 1
+  bpid="$(read_state_field pids.backend)"
+  fpid="$(read_state_field pids.frontend)"
+  opid="$(read_state_field pids.operator)"
+  backend_url="$(read_state_field urls.backend)"
+  frontend_url="$(read_state_field urls.frontend_local)"
+  operator_url="$(read_state_field urls.operator_local)"
+  ai_config="$(read_state_field ai_runtime_configured)"
+
+  info "Tooth runtime status"
+  info "- backend pid alive: $(pid_alive "$bpid" && echo yes || echo no)"
+  info "- frontend pid alive: $(pid_alive "$fpid" && echo yes || echo no)"
+  info "- operator pid alive: $(pid_alive "$opid" && echo yes || echo no)"
+  info "- backend health: $(http_ok "$backend_url/api/v1/healthz" && echo ok || echo fail)"
+  info "- frontend health: $(http_ok "$frontend_url" && echo ok || echo fail)"
+  info "- frontend url: $frontend_url"
+  info "- operator url: $operator_url"
+  tail_url="$(python3 - "$TOOTH_STATE_FILE" <<'PY'
+import json, sys
+with open(sys.argv[1], "r", encoding="utf-8") as f:
+    d = json.load(f)
+print(d.get("urls", {}).get("frontend_tailscale") or "")
+PY
+)"
+  if [ -n "$tail_url" ]; then
+    info "- frontend tailscale: $tail_url"
+  fi
+  info "- ai runtime configured: $ai_config"
+}
+
+do_stop() {
+  require_state || return 0
+  for svc in backend frontend operator; do
+    pid="$(read_state_field pids."$svc")"
+    if pid_alive "$pid"; then
+      kill "$pid" >/dev/null 2>&1 || true
+      sleep 1
+      if pid_alive "$pid"; then kill -9 "$pid" >/dev/null 2>&1 || true; fi
+    fi
+  done
+  rm -f "$TOOTH_LOCK_FILE" "$TOOTH_STATE_FILE"
+  info "Tooth stopped."
+}
+
+do_logs() {
+  info "== backend log =="
+  [ -f "$backend_log" ] && tail -n 40 "$backend_log" || info "(missing)"
+  info "== frontend log =="
+  [ -f "$frontend_log" ] && tail -n 40 "$frontend_log" || info "(missing)"
+  info "== operator log =="
+  [ -f "$operator_log" ] && tail -n 40 "$operator_log" || info "(missing)"
+}
+
+do_doctor() {
+  info "Tooth doctor"
+  info "- python3: $(command -v python3 >/dev/null 2>&1 && echo ok || echo missing)"
+  info "- node: $(command -v node >/dev/null 2>&1 && echo ok || echo missing)"
+  info "- npm: $(command -v npm >/dev/null 2>&1 && echo ok || echo missing)"
+  info "- curl: $(command -v curl >/dev/null 2>&1 && echo ok || echo missing)"
+  info "- backend .env exists: $([ -f "$ROOT/backend/.env" ] && echo yes || echo no)"
+  info "- OPENAI_API_KEY configured (value hidden): $(python3 - <<'PY'
+from pathlib import Path
+p = Path("backend/.env")
+ok = False
+if p.exists():
+    for ln in p.read_text(encoding="utf-8").splitlines():
+        if ln.startswith("OPENAI_API_KEY=") and ln.split("=",1)[1].strip():
+            ok = True
+            break
+print("yes" if ok else "no")
+PY
+)"
+}
+
+do_tui() {
+  require_state || {
+    stderr "Tooth is not running. Start it first with 'tooth start'."
+    return 1
+  }
+  info "Open operator surface: $(read_state_field urls.operator_local)"
+}
+
+cmd="${1:-start}"
+case "$cmd" in
+  start) do_start ;;
+  status) do_status ;;
+  stop) do_stop ;;
+  restart) do_stop; do_start ;;
+  logs) do_logs ;;
+  doctor) do_doctor ;;
+  tui) do_tui ;;
+  *)
+    stderr "Usage: tooth [start|status|stop|restart|logs|doctor|tui]"
+    exit 2
+    ;;
+esac

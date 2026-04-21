@@ -1,0 +1,422 @@
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: system-ui, sans-serif;
+  line-height: 1.5;
+  color: #1a1a1a;
+  background: #f5f5f5;
+}
+
+.app {
+  max-width: 56rem;
+  margin: 0 auto;
+  padding: 1.5rem 1rem;
+}
+
+h1 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin: 0 0 1rem;
+}
+
+h2 {
+  font-size: 1.05rem;
+  font-weight: 600;
+  margin: 0 0 0.75rem;
+}
+
+h3.subheading {
+  font-size: 0.9rem;
+  font-weight: 600;
+  margin: 1rem 0 0.5rem;
+}
+
+.muted {
+  margin: 0;
+  font-size: 0.875rem;
+  color: #555;
+}
+
+.muted-inline {
+  margin: 0.5rem 0 0;
+  font-size: 0.875rem;
+  color: #555;
+}
+
+.user-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.user-email {
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+.auth-shell {
+  width: 100%;
+}
+
+.workspace {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.panel-muted {
+  opacity: 0.92;
+}
+
+.select-list {
+  list-style: none;
+  margin: 0 0 1rem;
+  padding: 0;
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
+  max-height: 14rem;
+  overflow: auto;
+}
+
+.select-list li + li {
+  border-top: 1px solid #eee;
+}
+
+.select-list-item {
+  display: block;
+  width: 100%;
+  margin: 0;
+  padding: 0.5rem 0.75rem;
+  text-align: left;
+  font: inherit;
+  background: #fafafa;
+  border: none;
+  cursor: pointer;
+}
+
+.select-list-item:hover {
+  background: #f0f4ff;
+}
+
+.select-list-item.is-selected {
+  background: #e8eeff;
+  font-weight: 600;
+}
+
+.item-meta {
+  font-weight: 400;
+  color: #666;
+  font-size: 0.85rem;
+}
+
+.stack-form {
+  margin-top: 0.5rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid #eee;
+}
+
+textarea {
+  padding: 0.375rem 0.5rem;
+  border: 1px solid #ccc;
+  border-radius: 3px;
+  font: inherit;
+  resize: vertical;
+  min-height: 4rem;
+}
+
+button[type="button"] {
+  font: inherit;
+  cursor: pointer;
+}
+
+.btn-secondary {
+  padding: 0.375rem 0.75rem;
+  border: 1px solid #ccc;
+  border-radius: 3px;
+  background: #fff;
+}
+
+.btn-secondary:hover {
+  background: #f5f5f5;
+}
+
+.detail-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0;
+}
+
+@media (min-width: 720px) {
+  .detail-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 0;
+  }
+}
+
+.detail-block {
+  margin-top: 0.5rem;
+}
+
+.detail-meta {
+  margin: 0 0 0.75rem;
+  display: grid;
+  gap: 0.35rem;
+  font-size: 0.875rem;
+}
+
+.detail-meta dt {
+  margin: 0;
+  font-weight: 600;
+  color: #444;
+}
+
+.detail-meta dd {
+  margin: 0 0 0.25rem;
+}
+
+.detail-pre {
+  margin: 0;
+  padding: 0.75rem;
+  background: #fafafa;
+  border: 1px solid #e5e5e5;
+  border-radius: 3px;
+  font-size: 0.8rem;
+  white-space: pre-wrap;
+  word-break: break-word;
+  max-height: 20rem;
+  overflow: auto;
+}
+
+.draft-editor {
+  width: 100%;
+  min-height: 10rem;
+  margin-bottom: 0.25rem;
+}
+
+.draft-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin: 0.5rem 0 0.25rem;
+}
+
+.draft-actions button {
+  padding: 0.375rem 0.75rem;
+  font: inherit;
+  border: 1px solid #ccc;
+  border-radius: 3px;
+  background: #fff;
+  cursor: pointer;
+}
+
+.draft-actions button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.draft-frozen-note {
+  margin: 0.35rem 0 0;
+}
+
+.diff-hint,
+.branch-hint {
+  margin: 0 0 0.5rem;
+  font-size: 0.8rem;
+}
+
+.diff-meta {
+  font-size: 0.8rem;
+  color: #444;
+  margin-bottom: 0.35rem;
+}
+
+.diff-pre {
+  font-family: ui-monospace, monospace;
+  font-size: 0.75rem;
+}
+
+.draft-version-list {
+  max-height: 12rem;
+}
+
+.panel {
+  margin-top: 1.25rem;
+  padding: 1rem;
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+.status-ok {
+  margin: 0;
+  color: #0d5c0d;
+}
+
+.status-fail {
+  margin: 0;
+  color: #8b1a1a;
+}
+
+.form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  margin-bottom: 0.75rem;
+}
+
+.form-field-inline {
+  flex-direction: row;
+  align-items: flex-start;
+  gap: 0.5rem;
+}
+
+.book-picker,
+.book-export-actions {
+  margin: 0.75rem 0;
+}
+
+.form-field label {
+  font-size: 0.875rem;
+}
+
+.form-field input {
+  padding: 0.375rem 0.5rem;
+  border: 1px solid #ccc;
+  border-radius: 3px;
+  font: inherit;
+}
+
+button[type="submit"] {
+  margin-top: 0.25rem;
+  padding: 0.375rem 0.75rem;
+  font: inherit;
+  cursor: pointer;
+}
+
+.form-error {
+  margin: 0.5rem 0 0;
+  font-size: 0.875rem;
+  color: #8b1a1a;
+}
+
+.ai-assist-hint {
+  margin-bottom: 0.75rem;
+}
+
+.ai-assist-hint code {
+  font-size: 0.8em;
+}
+
+.ai-route-meta {
+  margin-bottom: 0.75rem;
+}
+
+.ai-context-details {
+  margin: 0.75rem 0;
+}
+
+.ai-context-details summary {
+  cursor: pointer;
+  font-size: 0.875rem;
+}
+
+.ai-suggestion-list {
+  list-style: none;
+  margin: 0.5rem 0 0;
+  padding: 0;
+}
+
+.ai-suggestion-list li {
+  margin-bottom: 0.75rem;
+}
+
+.ai-suggestion-body {
+  margin: 0.35rem 0 0;
+  font-size: 0.8rem;
+  white-space: pre-wrap;
+}
+
+.ai-op-list {
+  margin-top: 0.5rem;
+}
+
+.ai-op-line {
+  font-size: 0.85rem;
+}
+
+.ai-result-actions {
+  margin-bottom: 0.75rem;
+}
+
+.ai-suggestion-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.5rem 1rem;
+  justify-content: space-between;
+}
+
+.ai-suggestion-actions {
+  display: inline-flex;
+  gap: 0.5rem;
+  margin-left: auto;
+}
+
+.ai-suggestion-actions button {
+  font: inherit;
+  font-size: 0.85rem;
+  padding: 0.2rem 0.5rem;
+  cursor: pointer;
+}
+
+.ai-apply-hint {
+  margin-bottom: 0.5rem;
+}
+
+.search-mode-row select {
+  font: inherit;
+  padding: 0.25rem 0.5rem;
+  max-width: 100%;
+}
+
+.search-hit {
+  padding: 0.25rem 0;
+}
+
+.ingest-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+}
+
+.ingest-actions button {
+  font: inherit;
+  font-size: 0.9rem;
+  padding: 0.35rem 0.65rem;
+  cursor: pointer;
+}
+
+.ingest-candidate-list {
+  margin-top: 0.5rem;
+}
+
+.ingest-candidate-line {
+  font-size: 0.85rem;
+}
+
+.form-field textarea {
+  padding: 0.375rem 0.5rem;
+  border: 1px solid #ccc;
+  border-radius: 3px;
+  font: inherit;
+  resize: vertical;
+}

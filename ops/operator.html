@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Tooth Operator</title>
+    <style>
+      body { font-family: system-ui, sans-serif; margin: 1rem auto; max-width: 960px; padding: 0 1rem; }
+      .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 0.75rem; }
+      .card { border: 1px solid #ccc; border-radius: 8px; padding: 0.75rem; }
+      .ok { color: #0f766e; }
+      .bad { color: #b91c1c; }
+      code { background: #f5f5f5; padding: 0.1rem 0.3rem; border-radius: 4px; }
+      ul { margin: 0.5rem 0; padding-left: 1.2rem; }
+    </style>
+  </head>
+  <body>
+    <h1>Tooth Operator Surface</h1>
+    <p id="stamp">Loading state…</p>
+    <div class="grid">
+      <section class="card">
+        <h2>Runtime</h2>
+        <div id="runtimeState"></div>
+      </section>
+      <section class="card">
+        <h2>Services</h2>
+        <ul id="serviceState"></ul>
+      </section>
+      <section class="card">
+        <h2>Ports & URLs</h2>
+        <ul id="urlState"></ul>
+      </section>
+      <section class="card">
+        <h2>AI Runtime</h2>
+        <div id="aiState"></div>
+      </section>
+    </div>
+    <script>
+      function li(text, cls) {
+        const el = document.createElement("li");
+        if (cls) el.className = cls;
+        el.textContent = text;
+        return el;
+      }
+      async function render() {
+        const res = await fetch("/api/state");
+        const data = await res.json();
+        const stamp = document.getElementById("stamp");
+        if (data.status === "not_running") {
+          stamp.textContent = "Tooth is not running.";
+          return;
+        }
+        stamp.textContent = "State refresh: " + new Date().toLocaleString();
+        document.getElementById("runtimeState").innerHTML =
+          "<p>Worker status: <strong>" + (data.worker_status || "n/a") + "</strong></p>";
+
+        const service = document.getElementById("serviceState");
+        service.innerHTML = "";
+        service.appendChild(li("Backend PID alive: " + data.live.backend_pid_alive, data.live.backend_pid_alive ? "ok" : "bad"));
+        service.appendChild(li("Backend health: " + data.live.backend_health_ok, data.live.backend_health_ok ? "ok" : "bad"));
+        service.appendChild(li("Frontend PID alive: " + data.live.frontend_pid_alive, data.live.frontend_pid_alive ? "ok" : "bad"));
+        service.appendChild(li("Frontend health: " + data.live.frontend_health_ok, data.live.frontend_health_ok ? "ok" : "bad"));
+        service.appendChild(li("Operator PID alive: " + data.live.operator_pid_alive, data.live.operator_pid_alive ? "ok" : "bad"));
+
+        const urls = document.getElementById("urlState");
+        urls.innerHTML = "";
+        urls.appendChild(li("Backend: " + data.urls.backend));
+        urls.appendChild(li("Frontend (local): " + data.urls.frontend_local));
+        urls.appendChild(li("Operator (local): " + data.urls.operator_local));
+        if (data.urls.frontend_tailscale) urls.appendChild(li("Frontend (tailscale): " + data.urls.frontend_tailscale));
+        if (data.urls.operator_tailscale) urls.appendChild(li("Operator (tailscale): " + data.urls.operator_tailscale));
+
+        const ai = document.getElementById("aiState");
+        ai.innerHTML = "<p>Configured: <strong>" + (data.ai_runtime_configured ? "yes" : "no") + "</strong></p>";
+      }
+      render().catch(() => { document.getElementById("stamp").textContent = "Failed to load operator state."; });
+      setInterval(() => { render().catch(() => {}); }, 4000);
+    </script>
+  </body>
+</html>
