@@ -10,6 +10,11 @@ export type LoginRequestBody = {
   password: string;
 };
 
+export type SignupRequestBody = {
+  email: string;
+  password: string;
+};
+
 export type TokenResponse = {
   access_token: string;
   token_type?: string;
@@ -137,6 +142,18 @@ export async function login(body: LoginRequestBody): Promise<TokenResponse> {
     throw new Error(await readErrorMessage(res));
   }
   return parseJson<TokenResponse>(res);
+}
+
+export async function signup(body: SignupRequestBody): Promise<UserResponse> {
+  const res = await fetch(`${API_PREFIX}/auth/signup`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) {
+    throw new Error(await readErrorMessage(res));
+  }
+  return parseJson<UserResponse>(res);
 }
 
 export async function fetchMe(token: string): Promise<UserResponse> {

@@ -15,5 +15,10 @@ if [ ! -f ".env" ] && [ -f ".env.example" ]; then
   cp .env.example .env
 fi
 
+cd ..
+bash scripts/start_local_postgres.sh
+cd backend
+export DATABASE_URL="${TOOTH_DATABASE_URL:-postgresql+psycopg://tooth:tooth@127.0.0.1:55432/tooth}"
+
 alembic upgrade head
 uvicorn app.main:app --reload

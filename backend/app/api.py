@@ -6,11 +6,12 @@ import uuid
 
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
 from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy.orm import Session
 
 from app.ai.openai_client import get_sync_client
 from app.config import get_settings
-from app.db import get_db_session
+from app.db import SessionLocal, get_db_session
 from app.dependencies import get_current_user, get_draft_for_user, get_project_for_user
 from app.models import Draft, Project, RawText, User
 from app.raw_text_index import try_index_raw_text
@@ -28,10 +29,11 @@ from app.schemas import (
     RawTextCreate,
     RawTextImportResponse,
     RawTextListItem,
+    SignupRequest,
     TokenResponse,
     UserResponse,
 )
-from app.security import create_access_token, verify_password
+from app.security import create_access_token, hash_password, verify_password
 from app.storage import TextStorage
 
 router = APIRouter()
@@ -56,17 +58,61 @@ def draft_to_response(draft: Draft, storage: TextStorage) -> DraftResponse:
 @router.get("/healthz", response_model=HealthResponse)
 def healthz() -> HealthResponse:
     settings = get_settings()
+    try:
+        with SessionLocal() as session:
+            session.execute(select(User.id).limit(1))
+    except SQLAlchemyError as exc:
+        logger.warning("health_db_unavailable error=%s", exc)
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Database unavailable",
+        ) from exc
     return HealthResponse(status="ok", app_name=settings.app_name)
+
+
+@router.post("/auth/signup", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
+def signup(payload: SignupRequest, db: Session = Depends(get_db_session)) -> UserResponse:
+    user = User(
+        email=payload.email,
+        password_hash=hash_password(payload.password),
+        is_active=True,
+    )
+    db.add(user)
+    try:
+        db.commit()
+    except IntegrityError as exc:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Email already registered",
+        ) from exc
+    except SQLAlchemyError as exc:
+        db.rollback()
+        logger.exception("signup_db_error error=%s", exc)
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Database unavailable",
+        ) from exc
+    db.refresh(user)
+    logger.info("signup_success email=%s", user.email)
+    return UserResponse(id=user.id, email=user.email, is_active=user.is_active)
 
 
 @router.post("/auth/login", response_model=TokenResponse)
 def login(payload: LoginRequest, db: Session = Depends(get_db_session)) -> TokenResponse:
-    user = db.scalar(
-        select(User).where(
-            User.email == payload.email,
-            User.is_active.is_(True),
+    try:
+        user = db.scalar(
+            select(User).where(
+                User.email == payload.email,
+                User.is_active.is_(True),
+            )
         )
-    )
+    except SQLAlchemyError as exc:
+        logger.exception("login_db_error error=%s", exc)
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Database unavailable",
+        ) from exc
     if user is None or not verify_password(payload.password, user.password_hash):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,

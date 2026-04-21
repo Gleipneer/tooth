@@ -97,6 +97,7 @@ payload = {
     "hosts": {"backend": bh, "frontend": fh, "operator": oph},
     "urls": {
         "backend": backend_url,
+        "frontend_api_target": backend_url,
         "frontend_local": frontend_url,
         "operator_local": operator_url,
         "frontend_tailscale": tailscale_frontend,

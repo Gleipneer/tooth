@@ -10,6 +10,7 @@ This document describes the canonical environment files for Tooth as implemented
 | Frontend dev server | `frontend/.env` | Vite (`VITE_*` only) |
 
 `scripts/dev_backend.sh` and `scripts/dev_frontend.sh` copy `.env.example` to `.env` when `.env` is missing.
+For local MVP runs, backend startup scripts also ensure local PostgreSQL and default `DATABASE_URL` to `postgresql+psycopg://tooth:tooth@127.0.0.1:55432/tooth` unless overridden by `TOOTH_DATABASE_URL`.
 
 Backend settings always read `backend/.env` via an absolute path derived from `backend/app/config.py`, so changing the shell current working directory does not change which file is loaded.
 
@@ -18,6 +19,7 @@ Backend settings always read `backend/.env` via an absolute path derived from `b
 All backend keys are plain environment variables (case-insensitive names accepted by pydantic-settings). The authoritative list is `backend/app/config.py` and `backend/.env.example`.
 
 Phase 4 uses the same names as the OpenAI Python SDK for the base client: `OPENAI_API_KEY`, `OPENAI_BASE_URL`, `OPENAI_DEFAULT_MODEL`. The API also reads `OPENAI_CHEAP_MODEL`, `OPENAI_EXPENSIVE_MODEL`, and bounded-context settings `AI_MAX_CONTEXT_CHARS`, `AI_MAX_USER_MESSAGE_CHARS`, `AI_MAX_CHEAP_ROUNDS` (see `backend/app/config.py` and `backend/.env.example`). `OPENAI_API_KEY` is required for `/api/v1/ai/assist` to return 200; without it the endpoint responds with 503. The API client retries with `max_completion_tokens` when the provider rejects `max_tokens` (model-dependent).
+Auth/account flow currently supports `POST /api/v1/auth/signup`, `POST /api/v1/auth/login`, and `GET /api/v1/auth/me`. Bootstrap seeding remains as startup fallback (`BOOTSTRAP_EMAIL`, `BOOTSTRAP_PASSWORD`) when that user is missing.
 
 Phase 5 adds project-scoped `GET /api/v1/projects/{id}/search` (FTS always; semantic/hybrid require embeddings via the same API key). Raw texts store a bounded `search_text` mirror for PostgreSQL FTS and optional `embedding_json` for similarity. Paste ingest uses `POST /api/v1/ai/paste-analyze` and explicit `POST /api/v1/ingest-review/{id}/accept` to create raw texts — never silent writes. Relevant settings: `OPENAI_EMBEDDING_MODEL`, `EMBEDDING_MAX_CHARS`, `SEARCH_MAX_RESULTS`, `SEMANTIC_SCAN_MAX_RAW_TEXTS`, `PASTE_MAX_CHARS` (see `backend/app/config.py`).
 
@@ -26,6 +28,7 @@ Phase 6 adds books, outline nodes, and assignments linking outline sections to r
 ## Frontend variables
 
 Only `VITE_API_PROXY_TARGET` is used (see `frontend/vite.config.ts`). The browser calls relative `/api/...`; the dev server proxies `/api` to this target.
+If `VITE_API_PROXY_TARGET` is not set, Vite resolves the backend target from `data/runtime/state.json` (`urls.backend`) so local runs keep following the currently selected Tooth backend port instead of assuming `127.0.0.1:8000`.
 
 ## Ubuntu: where to put the real API key
 

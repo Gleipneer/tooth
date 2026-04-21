@@ -21,8 +21,10 @@ This runbook is the canonical operator guide for running Tooth on a single Ubunt
 
 1. Port preflight and conflict-aware selection for backend, frontend, and operator surfaces.
 2. Backend boot:
+   - ensures local PostgreSQL (`scripts/start_local_postgres.sh`)
    - ensures `backend/.venv`
    - installs backend dev requirements
+   - exports default runtime DB URL (`127.0.0.1:55432`) unless `TOOTH_DATABASE_URL` is set
    - applies `alembic upgrade head`
    - starts `uvicorn`
 3. Frontend boot:
@@ -36,13 +38,13 @@ This runbook is the canonical operator guide for running Tooth on a single Ubunt
 
 Canonical runtime state files:
 
-- `data/runtime/state.json` - selected ports, URLs, service PIDs, AI-runtime-configured boolean.
+- `data/runtime/state.json` - selected ports, URLs, frontend API proxy target, service PIDs, AI-runtime-configured boolean.
 - `data/runtime/tooth.lock` - simple running marker.
 - `data/runtime/logs/backend.log`
 - `data/runtime/logs/frontend.log`
 - `data/runtime/logs/operator.log`
 
-`tooth status` uses both manifest and live checks (PID probe + HTTP health checks), so it does not rely on stale state alone.
+`tooth status` uses both manifest and live checks (PID probe + HTTP health checks), and prints backend URL plus frontend API target so operators can confirm exactly which backend the UI is calling.
 
 ## Port strategy and collisions
 

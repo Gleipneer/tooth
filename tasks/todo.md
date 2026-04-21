@@ -42,6 +42,35 @@ Repo-defined MVP **Phases 1–7** and **Gates 1–7** are satisfied for the **cu
 - [x] Tailscale URL detection/display (best effort, non-secret)
 - [x] Final proof pass for operator commands and conflict behavior
 
+## Auth/bootstrap regression fix
+
+- [x] Diagnosed login `500` root cause from backend runtime logs (DB auth failure on 127.0.0.1:5432)
+- [x] Fixed backend startup path to ensure local Postgres + consistent local DB URL fallback
+- [x] Verified bootstrap user exists and login/auth session succeed
+- [x] Re-ran backend tests, frontend tests/build, and migration sanity
+
+## Auth hardening (email + password accounts)
+
+- [x] Added account creation endpoint (`POST /api/v1/auth/signup`) with duplicate email protection
+- [x] Added minimal signup/signin toggle in UI and preserved authenticated workspace entry
+- [x] Added local session token persistence in browser storage
+- [x] Verified live signup, duplicate rejection, wrong-password rejection, login, and authenticated session
+
+## Runtime/API binding truth hardening
+
+- [x] Root-caused mismatch between default frontend proxy fallback (`127.0.0.1:8000`) and conflict-shifted Tooth backend ports
+- [x] Added explicit frontend API target to runtime manifest (`urls.frontend_api_target`)
+- [x] Updated `tooth status` output to print backend URL and frontend API target
+- [x] Updated Vite proxy fallback to read backend URL from runtime state before legacy `8000` fallback
+- [x] Re-validated live UI signup/login against runtime-reported backend URL
+
+## Pre-frontend audit (truth pass)
+
+- [x] Audited real frontend stack, structure, state model, styling strategy, runtime API binding behavior
+- [x] Inventoried actual backend endpoint surface from router code and mapped frontend usage status
+- [x] Produced canonical pre-frontend audit document at `docs/39_PRE_FRONTEND_AUDIT.md`
+- [x] Recorded missing canonical docs (`docs/17_*`, `docs/18_*`) as governance/contract risk in audit
+
 ## Deferred (explicit per `docs/03_PHASED_MASTER_PLAN.md`)
 
 - Multi-user, offline sync, advanced import/export formats, graph narrative tools, public sharing.

@@ -36,7 +36,12 @@ import {
 } from "./lib/api";
 
 export default function App() {
-  const [accessToken, setAccessToken] = useState<string | null>(null);
+  const [accessToken, setAccessToken] = useState<string | null>(() => {
+    if (typeof window === "undefined") {
+      return null;
+    }
+    return window.localStorage.getItem("tooth_access_token");
+  });
 
   const [sessionLoading, setSessionLoading] = useState(false);
   const [sessionError, setSessionError] = useState<string | null>(null);
@@ -331,6 +336,7 @@ export default function App() {
   }, [accessToken, selectedDraftId]);
 
   const handleLogout = useCallback(() => {
+    window.localStorage.removeItem("tooth_access_token");
     setAccessToken(null);
   }, []);
 
@@ -650,7 +656,12 @@ export default function App() {
             </div>
           ) : null
         ) : (
-          <LoginForm onLoggedIn={setAccessToken} />
+          <LoginForm
+            onLoggedIn={(token) => {
+              window.localStorage.setItem("tooth_access_token", token);
+              setAccessToken(token);
+            }}
+          />
         )}
       </section>
     </main>

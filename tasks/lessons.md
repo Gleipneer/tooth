@@ -45,6 +45,13 @@ This file stores reusable lessons for future Composer and Cursor runs.
 - Restore helpers must handle the normal local-ops case: if the repo PostgreSQL cluster is already running, do not try to start a second server, and use an admin-capable local connection for restore database creation.
 - CLI wrappers installed via symlink should resolve their real path (`readlink -f`) before locating repo-relative libraries.
 - Startup status checks should prefer live probes and tolerate short warm-up windows before declaring degraded service.
+- `healthz` can be green while auth is broken if database access is failing; auth/bootstrap checks must be validated explicitly.
+- Local startup scripts must align with the actual local PostgreSQL port/credentials to avoid login `500` regressions.
+- Bootstrap-user seeding is useful as fallback, but MVP usability requires a real user-driven signup path.
+- Auth UX must surface expected failures (duplicate email, invalid credentials) as user-readable errors, not generic failures.
+- Runtime/operator truth must expose backend URL and frontend API target explicitly; never rely on an implicit `:8000` assumption when fallback ports are active.
+- Frontend execution should not begin with visual polish: lock route map, shell shape, and state/query boundaries first or the UI layer will thrash.
+- Canonical planning references must exist as real files; if a required contract doc (for example `docs/17_*` or `docs/18_*`) is missing, treat it as a governance risk and document code-derived truth explicitly before implementation.
 
 ## Prompt-quality lessons
 

@@ -22,6 +22,7 @@ Read these in order before planning or coding:
 Tooth is a conversation-first writing workspace for a single writer first, deployed on Ubuntu, with:
 
 - immutable raw text capture and import
+- local email/password account signup and sign-in
 - draft versioning and branching
 - editor and chat working in the same surface
 - explicit-apply AI suggestions with auditable context
@@ -44,6 +45,11 @@ The canonical implementation package in this repo includes:
 - `docs/34_RUNTIME_COST_AND_CAPACITY_GUARDRAILS.md` (runtime guardrails)
 
 The source archives are reference inputs, not the active governance layer.
+
+## Current usage docs
+
+- System capabilities: `docs/37_SYSTEM_CAPABILITIES_AND_USAGE.md`
+- Quickstart commands: `docs/38_QUICKSTART_AND_HELPFUL_COMMANDS.md`
 
 ## MVP in one sentence
 
