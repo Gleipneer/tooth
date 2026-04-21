@@ -4,9 +4,10 @@ import { projectSearch, type SearchHit, type SearchResponse } from "../lib/api";
 type SearchPanelProps = {
   token: string;
   projectId: string | null;
+  onOpenRawText?: (rawTextId: string) => void;
 };
 
-export function SearchPanel({ token, projectId }: SearchPanelProps) {
+export function SearchPanel({ token, projectId, onOpenRawText }: SearchPanelProps) {
   const [q, setQ] = useState("");
   const [mode, setMode] = useState<"fts" | "semantic" | "hybrid">("fts");
   const [pending, setPending] = useState(false);
@@ -33,9 +34,10 @@ export function SearchPanel({ token, projectId }: SearchPanelProps) {
 
   return (
     <section className="panel" aria-label="Project search" data-testid="search-panel">
-      <h2>Search raw texts</h2>
+      <h2>Find writing you already have</h2>
       <p className="muted">
-        Project-scoped full-text (FTS). Semantic and hybrid need <code>OPENAI_API_KEY</code> for embeddings.
+        Search within your project and reopen the exact page in Pages Studio.
+        Semantic and hybrid modes use embeddings and need <code>OPENAI_API_KEY</code>.
       </p>
       {!projectId ? <p className="muted">Select a project.</p> : null}
       <form className="stack-form" onSubmit={(ev) => void handleSearch(ev)}>
@@ -64,11 +66,11 @@ export function SearchPanel({ token, projectId }: SearchPanelProps) {
             }}
             maxLength={500}
             disabled={!projectId || pending}
-            placeholder="Words or phrases in imported raw texts…"
+            placeholder="Find notes, arguments, phrases, or sections..."
           />
         </div>
         <button type="submit" disabled={!projectId || pending || !q.trim()}>
-          {pending ? "Searching…" : "Search"}
+          {pending ? "Searching..." : "Find"}
         </button>
         {error ? (
           <p className="form-error" role="alert">
@@ -79,7 +81,7 @@ export function SearchPanel({ token, projectId }: SearchPanelProps) {
       {result ? (
         <div className="search-results">
           <h3 className="subheading">
-            Results ({result.hits.length}) — {result.mode}
+            Writing results ({result.hits.length}) — {result.mode}
           </h3>
           {result.hits.length === 0 ? <p className="muted">No matches.</p> : null}
           <ul className="select-list">
@@ -88,8 +90,19 @@ export function SearchPanel({ token, projectId }: SearchPanelProps) {
                 <strong>{h.title}</strong>
                 <span className="item-meta">
                   {" "}
-                  score {h.score.toFixed(4)} · {h.rank_kind}
+                  relevance {h.score.toFixed(4)} · {h.rank_kind}
                 </span>
+                {onOpenRawText ? (
+                  <button
+                    type="button"
+                    className="btn-secondary"
+                    onClick={() => {
+                      onOpenRawText(h.raw_text_id);
+                    }}
+                  >
+                    Open in Pages Studio
+                  </button>
+                ) : null}
               </li>
             ))}
           </ul>

@@ -52,6 +52,14 @@ This file stores reusable lessons for future Composer and Cursor runs.
 - Runtime/operator truth must expose backend URL and frontend API target explicitly; never rely on an implicit `:8000` assumption when fallback ports are active.
 - Frontend execution should not begin with visual polish: lock route map, shell shape, and state/query boundaries first or the UI layer will thrash.
 - Canonical planning references must exist as real files; if a required contract doc (for example `docs/17_*` or `docs/18_*`) is missing, treat it as a governance risk and document code-derived truth explicitly before implementation.
+- Planning zips can be directionally useful but must be reconciled against live repo/API/runtime truth before execution; never implement zip assumptions directly.
+- Frontend plans must separate "current backend-supported behavior" from "future desired behavior" to prevent accidental scope creep and phantom endpoint dependencies.
+- Preflight decisions should be reflected in code skeleton before domain rebuild: lock routes, shell, query provider, and editor boundary first, then migrate feature surfaces incrementally.
+- Frontend completion should prioritize route-native usability with working domain flows; visual polish must follow working auth/project/raw/draft/chat/search/ingest/books behavior, not replace it.
+- Manual browser QA catches route/query coupling bugs that unit/integration tests can miss; always verify deep-link routes and post-auth redirects in the live UI before tagging a frontend release.
+- Product-UX evidence from real user confusion outranks “technically complete” checklists; when writers cannot see what happens next, pivot interaction model before further polish.
+- Cross-route writing flow must be explicit: when Search or Ingest opens a page context, auto-resolve the working draft so users land in editable state rather than a half-selected raw-only view.
+- Writer-first UX must include first-project creation in the same primary surface; otherwise new users hit a dead-end before they can create their first page.
 
 ## Prompt-quality lessons
 

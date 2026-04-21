@@ -12,7 +12,7 @@ import {
 type PasteIngestPanelProps = {
   token: string;
   projectId: string | null;
-  onIngestAccepted?: () => void;
+  onIngestAccepted?: (createdRawTextId?: string) => void;
 };
 
 export function PasteIngestPanel({ token, projectId, onIngestAccepted }: PasteIngestPanelProps) {
@@ -64,11 +64,11 @@ export function PasteIngestPanel({ token, projectId, onIngestAccepted }: PasteIn
     setActionPending(true);
     setError(null);
     try {
-      await acceptIngestReview(reviewId, token);
+      const accepted = await acceptIngestReview(reviewId, token);
       setAnalysis(null);
       setPasted("");
       refreshCandidates();
-      onIngestAccepted?.();
+      onIngestAccepted?.(accepted.created_raw_text_ids[0]);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Accept failed");
     } finally {
@@ -108,10 +108,10 @@ export function PasteIngestPanel({ token, projectId, onIngestAccepted }: PasteIn
 
   return (
     <section className="panel" aria-label="Paste ingest" data-testid="paste-ingest-panel">
-      <h2>Paste → structured ingest</h2>
+      <h2>Bring text into Pages</h2>
       <p className="muted">
-        Analyzes pasted text and stages a review item. Raw texts are created only when you choose{" "}
-        <strong>Accept staged</strong> (explicit). Book placement hints stay in JSON until a future book phase.
+        Paste source material, let Tooth detect likely page candidates, and explicitly choose what to keep.
+        Nothing is written silently.
       </p>
       {!projectId ? <p className="muted">Select a project.</p> : null}
       <form className="stack-form" onSubmit={(ev) => void handleAnalyze(ev)}>
@@ -126,11 +126,11 @@ export function PasteIngestPanel({ token, projectId, onIngestAccepted }: PasteIn
             rows={10}
             maxLength={50000}
             disabled={!projectId || pending}
-            placeholder="Paste one or more fragments…"
+            placeholder="Paste source material, notes, or fragments..."
           />
         </div>
         <button type="submit" disabled={!projectId || pending || !pasted.trim()}>
-          {pending ? "Analyzing…" : "Analyze paste"}
+          {pending ? "Understanding text..." : "Analyze and stage"}
         </button>
         {error ? (
           <p className="form-error" role="alert">
@@ -143,7 +143,7 @@ export function PasteIngestPanel({ token, projectId, onIngestAccepted }: PasteIn
         <div className="paste-analysis-result">
           <h3 className="subheading">Staged analysis</h3>
           <p className="muted">
-            Review ID: <code>{analysis.review_item_id}</code>
+            Tooth staged this as a review item. Choose what to keep before anything becomes a page.
           </p>
           <details className="ai-context-details">
             <summary>Structured output (inspectable)</summary>
@@ -157,7 +157,7 @@ export function PasteIngestPanel({ token, projectId, onIngestAccepted }: PasteIn
                 void handleAccept(analysis.review_item_id);
               }}
             >
-              Accept staged (create raw texts from create_* intents)
+              Keep and create pages
             </button>
             <button
               type="button"
@@ -167,7 +167,7 @@ export function PasteIngestPanel({ token, projectId, onIngestAccepted }: PasteIn
                 void handleReject(analysis.review_item_id);
               }}
             >
-              Reject
+              Discard
             </button>
             <button
               type="button"
@@ -177,24 +177,26 @@ export function PasteIngestPanel({ token, projectId, onIngestAccepted }: PasteIn
                 void handleDefer(analysis.review_item_id);
               }}
             >
-              Defer
+              Keep staged for later
             </button>
           </div>
         </div>
       ) : null}
 
-      <h3 className="subheading">Ingest candidates</h3>
+      <h3 className="subheading">Staged items</h3>
       {candidatesError ? (
         <p className="status-fail" role="alert">
           {candidatesError}
         </p>
       ) : null}
-      {candidates.length === 0 && !candidatesError ? <p className="muted">No staged items.</p> : null}
+      {candidates.length === 0 && !candidatesError ? (
+        <p className="muted">No staged items yet. Analyze pasted text to start.</p>
+      ) : null}
       <ul className="select-list ingest-candidate-list">
         {candidates.map((c) => (
           <li key={c.id}>
             <span className="ingest-candidate-line">
-              {c.status} · {c.created_at}
+              {c.status} · {new Date(c.created_at).toLocaleString()}
               {c.id === lastPending ? " (latest)" : ""}
             </span>
           </li>

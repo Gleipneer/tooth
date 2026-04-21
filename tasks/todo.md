@@ -71,6 +71,80 @@ Repo-defined MVP **Phases 1–7** and **Gates 1–7** are satisfied for the **cu
 - [x] Produced canonical pre-frontend audit document at `docs/39_PRE_FRONTEND_AUDIT.md`
 - [x] Recorded missing canonical docs (`docs/17_*`, `docs/18_*`) as governance/contract risk in audit
 
+## Frontend plan reconciliation (zip plans vs repo truth)
+
+- [x] Located and extracted provided frontend plan zips (`tooth_frontend_plan.zip`, `tooth_frontend_plan_v2.zip`)
+- [x] Reconciled zip plans against repo docs, live backend/API surfaces, and current frontend/runtime behavior
+- [x] Produced reconciliation doc at `docs/40_FRONTEND_PLAN_RECONCILIATION.md`
+- [x] Produced canonical execution design at `docs/41_FRONTEND_EXECUTION_MASTER_PLAN.md`
+- [x] Produced open questions/risks at `docs/42_FRONTEND_OPEN_QUESTIONS_AND_RISKS.md`
+
+## Frontend implementation preflight (next run before coding)
+
+- [x] Create `docs/17_BACKEND_API_CONTRACTS.md` from live backend router/schema code
+- [x] Create `docs/18_DATABASE_SCHEMA_AND_STORAGE_MODEL.md` from models/storage code
+- [x] Lock route map, shell shape, and query/state strategy decisions in code structure (per `docs/41` and locked decisions)
+- [x] Confirm first implementation tranche scope and implement scaffold only (Shell+Routing+State+editor boundary+draft-integrated chat placement)
+
+## Frontend foundation lock-in (current run)
+
+- [x] Introduce route skeleton and app shell scaffold (`frontend/src/routes`, `frontend/src/layout`)
+- [x] Wire TanStack Query provider at app root (`frontend/src/app/AppProviders.tsx`)
+- [x] Add editor boundary/adapter with textarea baseline (`frontend/src/editor/*`)
+- [x] Add draft-integrated split-view chat route scaffold (`/projects/:projectId/drafts/:draftId`)
+- [x] Preserve existing monolithic workspace as temporary legacy route (`/legacy`) to avoid over-scoped rebuild in this run
+- [ ] Next tranche: migrate auth/projects/raw/draft flows from legacy page into route-native pages behind the new shell
+
+## Frontend completion pass (route-native usability)
+
+- [x] Replace scaffold routing with authenticated route-native shell and persistent navigation
+- [x] Implement session provider with login persistence and recovery to `/auth`
+- [x] Implement real workspace route for project/raw/draft creation and selection
+- [x] Keep draft editing/version/branch/freeze/unfreeze flows functional inside route-native workspace
+- [x] Keep draft-integrated chat model in the writing workspace (editor + AI panel in same draft context)
+- [x] Implement project-scoped Search, Ingest, and Books screens with route navigation
+- [x] Add raw text file import in workspace (`/projects` flow)
+- [x] Improve books assignment readability (titles instead of truncated IDs)
+- [x] Verify frontend tests/build and backend compatibility
+- [x] Verify runtime binding truth (`tooth status`: frontend API target == backend URL)
+
+## Final visual/manual QA and release-readiness verification
+
+- [x] Run live browser walkthrough across auth, workspace, drafts/versioning, AI assist, search, ingest, and books flows
+- [x] Verify responsive sanity in narrow/mobile and wider desktop viewport sizes
+- [x] Fix small route-state regressions found during manual QA (`/auth` redirect when already signed in; draft selection from route/query state)
+- [x] Re-run frontend test/build and backend compatibility tests after QA fixes
+
+## Writing-first UX correction (AI Pages pivot)
+
+- [x] Re-anchor primary `/projects` flow around writing-first pages + canvas + attached AI, while preserving raw/draft/version backend truth
+- [x] Implement safe auto-draft creation when opening a page with no draft
+- [x] Add obvious entry points for new page, paste/import text, and continue writing
+- [x] Reposition navigation language toward writer mental model (`Pages`, `Fragments`, `Books`)
+- [x] Follow-up tranche: reduce secondary form friction in `Ingest` and `Books` screens to match writing-first shell quality
+
+## Writing-first consistency pass (Ingest + Books + Search)
+
+- [x] Reframe Ingest language and actions around writer decisions (bring text, stage, keep/discard/later)
+- [x] Route accepted ingest output directly back into Pages Studio writing context
+- [x] Reframe Books around manuscript shaping language and add clearer structure + assignment readability
+- [x] Reframe Search language toward resurfacing writing and opening editor context
+- [x] Ensure raw-only deep links auto-resolve working draft in Pages Studio
+- [x] Verify live browser flows for Ingest -> Pages, Books readability, Search -> Pages, and cross-route coherence
+- [x] Re-run frontend tests/build after consistency pass
+
+## Writer Mode reset (new primary experience)
+
+- [x] Add new primary route `/write` and make it default post-auth landing
+- [x] Implement Writer Mode 3-column layout (light nav + editor + attached AI)
+- [x] Keep raw/draft/version truth under the hood with automatic working-draft resolution
+- [x] Add first-use empty state actions (`Start writing`, `Paste text`, `Import file`)
+- [x] Add first-project creation directly in Writer Mode to avoid first-use dead-end
+- [x] Demote previous `/projects` studio into secondary advanced route
+- [x] Rewire Search/Ingest return links to Writer Mode context (`/write?project=...&raw=...`)
+- [x] Run browser proof for sign-in landing, new-page writing, pasted-page writing, and attached AI flow
+- [x] Re-run frontend tests/build after Writer Mode implementation
+
 ## Deferred (explicit per `docs/03_PHASED_MASTER_PLAN.md`)
 
 - Multi-user, offline sync, advanced import/export formats, graph narrative tools, public sharing.

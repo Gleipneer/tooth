@@ -30,6 +30,8 @@ export function BooksPanel({ token, projectId, rawTexts }: BooksPanelProps) {
   const [assignNodeId, setAssignNodeId] = useState("");
   const [assignRawId, setAssignRawId] = useState("");
   const [createPending, setCreatePending] = useState(false);
+  const rawTextTitleById = new Map(rawTexts.map((r) => [r.id, r.title]));
+  const nodeTitleById = new Map(nodes.map((n) => [n.id, n.title]));
 
   const refreshBooks = useCallback(() => {
     if (!token || !projectId) {
@@ -140,12 +142,20 @@ export function BooksPanel({ token, projectId, rawTexts }: BooksPanelProps) {
     }
   }
 
+  const assignmentsByNodeId = new Map<string, BookAssignmentResponse[]>();
+  for (const assignment of assignments) {
+    const existing = assignmentsByNodeId.get(assignment.outline_node_id) ?? [];
+    existing.push(assignment);
+    assignmentsByNodeId.set(assignment.outline_node_id, existing);
+  }
+
+  const sortedNodes = [...nodes].sort((a, b) => a.sort_order - b.sort_order || a.created_at.localeCompare(b.created_at));
+
   return (
     <section className="panel" aria-label="Books" data-testid="books-panel">
-      <h2>Books &amp; export</h2>
+      <h2>Shape your manuscript</h2>
       <p className="muted">
-        Outline sections and assignments reference existing raw texts. Export builds Markdown from files — it
-        does not modify sources.
+        Organize pages into a manuscript outline, then export intentionally. Export never mutates source writing.
       </p>
       {!projectId ? <p className="muted">Select a project.</p> : null}
       {error ? (
@@ -155,7 +165,7 @@ export function BooksPanel({ token, projectId, rawTexts }: BooksPanelProps) {
       ) : null}
 
       <form className="stack-form" onSubmit={(ev) => void handleCreateBook(ev)}>
-        <h3 className="subheading">New book</h3>
+        <h3 className="subheading">New manuscript</h3>
         <div className="form-field">
           <label htmlFor="new-book-title">Title</label>
           <input
@@ -169,13 +179,13 @@ export function BooksPanel({ token, projectId, rawTexts }: BooksPanelProps) {
           />
         </div>
         <button type="submit" disabled={!projectId || createPending || !newBookTitle.trim()}>
-          {createPending ? "Creating…" : "Create book"}
+          {createPending ? "Creating..." : "Create manuscript"}
         </button>
       </form>
 
       {books.length > 0 ? (
         <div className="book-picker">
-          <h3 className="subheading">Select book</h3>
+          <h3 className="subheading">Active manuscript</h3>
           <select
             value={selectedBookId ?? ""}
             onChange={(ev) => {
@@ -195,7 +205,7 @@ export function BooksPanel({ token, projectId, rawTexts }: BooksPanelProps) {
       {selectedBookId ? (
         <>
           <form className="stack-form" onSubmit={(ev) => void handleAddNode(ev)}>
-            <h3 className="subheading">Add section</h3>
+            <h3 className="subheading">Add chapter/section</h3>
             <div className="form-field">
               <label htmlFor="new-node-title">Section title</label>
               <input
@@ -213,9 +223,9 @@ export function BooksPanel({ token, projectId, rawTexts }: BooksPanelProps) {
           </form>
 
           <form className="stack-form" onSubmit={(ev) => void handleAssign(ev)}>
-            <h3 className="subheading">Assign raw text to section</h3>
+            <h3 className="subheading">Place a page into structure</h3>
             <div className="form-field">
-              <label htmlFor="assign-node">Section</label>
+              <label htmlFor="assign-node">Chapter/section</label>
               <select
                 id="assign-node"
                 value={assignNodeId}
@@ -232,7 +242,7 @@ export function BooksPanel({ token, projectId, rawTexts }: BooksPanelProps) {
               </select>
             </div>
             <div className="form-field">
-              <label htmlFor="assign-raw">Raw text</label>
+              <label htmlFor="assign-raw">Page</label>
               <select
                 id="assign-raw"
                 value={assignRawId}
@@ -249,22 +259,49 @@ export function BooksPanel({ token, projectId, rawTexts }: BooksPanelProps) {
               </select>
             </div>
             <button type="submit" disabled={!assignNodeId || !assignRawId}>
-              Assign
+              Place in manuscript
             </button>
           </form>
 
+          <div className="stack-form">
+            <h3 className="subheading">Manuscript structure</h3>
+            {sortedNodes.length === 0 ? <p className="muted">No sections yet. Add your first chapter/section.</p> : null}
+            <ul className="select-list">
+              {sortedNodes.map((node) => {
+                const nodeAssignments = assignmentsByNodeId.get(node.id) ?? [];
+                return (
+                  <li key={node.id} className="search-hit">
+                    <strong>{node.title}</strong>
+                    {nodeAssignments.length === 0 ? (
+                      <p className="muted-inline">No pages placed here yet.</p>
+                    ) : (
+                      <ul className="book-assignments-nested">
+                        {nodeAssignments.map((assignment) => (
+                          <li key={assignment.id}>
+                            {rawTextTitleById.get(assignment.raw_text_id) ?? "Untitled page"}
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
+
           <div className="book-export-actions">
             <button type="button" onClick={() => void handleDownloadExport()}>
-              Download Markdown export
+              Export manuscript (Markdown)
             </button>
           </div>
 
-          <h3 className="subheading">Assignments</h3>
-          {assignments.length === 0 ? <p className="muted">No assignments yet.</p> : null}
+          <h3 className="subheading">Placed pages</h3>
+          {assignments.length === 0 ? <p className="muted">No pages placed yet.</p> : null}
           <ul className="select-list">
             {assignments.map((a) => (
               <li key={a.id}>
-                node {a.outline_node_id.slice(0, 8)}… → raw {a.raw_text_id.slice(0, 8)}…
+                <strong>{nodeTitleById.get(a.outline_node_id) ?? "Untitled section"}</strong>
+                <span className="item-meta"> → {rawTextTitleById.get(a.raw_text_id) ?? "Untitled page"}</span>
               </li>
             ))}
           </ul>

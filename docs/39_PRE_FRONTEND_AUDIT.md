@@ -98,6 +98,7 @@ This audit is implementation-truth only, based on current code in `frontend/src`
 ## 2) Backend contract inventory (actual current API surface)
 
 Status key:
+
 - `used` = actively called by current frontend
 - `partially used` = related surface used, but endpoint/feature path not represented in UI
 - `unused` = implemented but not called by frontend
@@ -411,21 +412,21 @@ Status key:
 ## 8) Recommended frontend work order (dependency + user value)
 
 1. Shell first
-   - Introduce route map + app shell + navigation + shared loading/error primitives.
+  - Introduce route map + app shell + navigation + shared loading/error primitives.
 2. Auth second
-   - Move auth/session into dedicated route/state boundary; harden token invalidation and session recovery UX.
+  - Move auth/session into dedicated route/state boundary; harden token invalidation and session recovery UX.
 3. Project/raw text/draft core surfaces
-   - Rebuild project -> raw text -> draft flow with clear route-driven selection and detail panes.
+  - Rebuild project -> raw text -> draft flow with clear route-driven selection and detail panes.
 4. Chat/editor integration
-   - Integrate AI assist with draft editing surface and explicit suggestion apply pathway.
+  - Integrate AI assist with draft editing surface and explicit suggestion apply pathway.
 5. Search + ingest
-   - Add linked result navigation; improve staged ingest review clarity and status flows.
+  - Add linked result navigation; improve staged ingest review clarity and status flows.
 6. Books surface
-   - Improve outline hierarchy interaction and assignment readability before any visual polish pass.
+  - Improve outline hierarchy interaction and assignment readability before any visual polish pass.
 7. Operator links/context
-   - Add runtime truth entrypoints from UI (backend URL, operator URL, health visibility) for operational clarity.
+  - Add runtime truth entrypoints from UI (backend URL, operator URL, health visibility) for operational clarity.
 8. Polish + accessibility pass
-   - Only after structural and workflow correctness are in place.
+  - Only after structural and workflow correctness are in place.
 
 ## Brutal readiness verdict
 
